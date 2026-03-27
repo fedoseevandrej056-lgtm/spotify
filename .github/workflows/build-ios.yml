@@ -1,0 +1,49 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Build iOS
+        run: flutter build ios --release --no-codesign
+      
+      - name: Create IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          mv Runner.app Payload/
+          zip -r -q spotify_music_player.ipa Payload/
+      
+      - name: Upload IPA to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-ipa
+          path: build/ios/iphoneos/spotify_music_player.ipa
+          retention-days: 30
+      
+      - name: Upload app to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-app
+          path: build/ios/iphoneos/Runner.app
+          retention-days: 30

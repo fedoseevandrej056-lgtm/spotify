@@ -1,0 +1,30 @@
+name: spotify_music_player
+description: A Spotify-like music player application for iOS with local song playback.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  provider: ^6.0.0
+  just_audio: ^0.9.34
+  audio_session: ^0.1.17
+  path_provider: ^2.1.0
+  intl: ^0.19.0
+  flutter_slidable: ^3.0.0
+  shimmer: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: false
+  assets:
+    - assets/images/
