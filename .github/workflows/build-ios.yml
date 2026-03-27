@@ -35,14 +35,14 @@ jobs:
           zip -r -q spotify_music_player.ipa Payload/
       
       - name: Upload IPA to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: build/ios/iphoneos/spotify_music_player.ipa
           retention-days: 30
       
       - name: Upload app to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ios-app
           path: build/ios/iphoneos/Runner.app
