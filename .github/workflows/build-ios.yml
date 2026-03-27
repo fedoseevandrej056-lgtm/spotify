@@ -27,11 +27,10 @@ jobs:
       - name: Prepare iOS
         run: |
           flutter clean
+          flutter create . --platforms=ios
           cd ios
-          rm -rf Pods
-          rm -rf Podfile.lock
+          pod install --repo-update
           cd ..
-          flutter pub get
       
       - name: Build iOS
         run: flutter build ios --release --no-codesign
