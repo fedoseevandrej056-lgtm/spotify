@@ -12,6 +12,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +45,98 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.playlist_play),
+            onPressed: () {
+              final libraryService =
+                  Provider.of<MusicLibraryService>(context, listen: false);
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: SpotifyTheme.secondaryBg,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (context) {
+                  final playlists = libraryService.playlists;
+                  return SizedBox(
+                    height: 320,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Playlists', style: TextStyle(fontSize: 18, color: Colors.white)),
+                              IconButton(
+                                icon: const Icon(Icons.add, color: Colors.white),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      final nameCtrl = TextEditingController();
+                                      return AlertDialog(
+                                        backgroundColor: SpotifyTheme.secondaryBg,
+                                        title: const Text('Create playlist'),
+                                        content: TextField(
+                                          controller: nameCtrl,
+                                          style: const TextStyle(color: Colors.white),
+                                          decoration: const InputDecoration(hintText: 'Playlist name'),
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                                          TextButton(
+                                            onPressed: () {
+                                              if (nameCtrl.text.trim().isNotEmpty) {
+                                                libraryService.createPlaylist(nameCtrl.text.trim());
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                            child: const Text('Create'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: playlists.length,
+                            itemBuilder: (context, idx) {
+                              final pl = playlists[idx];
+                              return ListTile(
+                                leading: const Icon(Icons.folder, color: Colors.white),
+                                title: Text(pl.name, style: const TextStyle(color: Colors.white)),
+                                subtitle: Text('${pl.songCount} songs', style: const TextStyle(color: Colors.white70)),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.white),
+                                  onPressed: () {
+                                    libraryService.deletePlaylist(pl.id);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Playlist "${pl.name}" with ${pl.songCount} songs')),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {},
@@ -87,40 +182,120 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 14,
                     ),
                   ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => libraryService.importSongsFromFiles(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Import Songs'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SpotifyTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
                 ],
               ),
             );
           }
 
+          final filteredSongs = libraryService.allSongs.where((song) {
+            if (_searchQuery.isEmpty) return true;
+            return song.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                song.artist.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                song.album.toLowerCase().contains(_searchQuery.toLowerCase());
+          }).toList();
+
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                    hintText: 'Search songs, artists, albums',
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: SpotifyTheme.secondaryBg,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${libraryService.allSongs.length} songs',
-                      style: const TextStyle(
-                        color: SpotifyTheme.textSecondary,
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        '${filteredSongs.length} songs',
+                        style: const TextStyle(
+                          color: SpotifyTheme.textSecondary,
+                          fontSize: 14,
+                        ),
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.playlist_add, color: Colors.white),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            final controller = TextEditingController();
+                            return AlertDialog(
+                              backgroundColor: SpotifyTheme.secondaryBg,
+                              title: const Text('Create playlist'),
+                              content: TextField(
+                                controller: controller,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(hintText: 'Playlist name'),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final name = controller.text.trim();
+                                    if (name.isNotEmpty) {
+                                      libraryService.createPlaylist(name);
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: const Text('Create'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
               Expanded(
                 child: ListView.builder(
-                  itemCount: libraryService.allSongs.length,
+                  itemCount: filteredSongs.length,
                   itemBuilder: (context, index) {
-                    final song = libraryService.allSongs[index];
+                    final song = filteredSongs[index];
+                    final originalIndex = libraryService.allSongs.indexOf(song);
                     final isPlaying =
-                        playerService.currentSongIndex == index &&
+                        playerService.currentSongIndex == originalIndex &&
                             playerService.isPlaying;
 
                     return GestureDetector(
                       onTap: () async {
-                        await playerService.playSong(index);
+                        if (originalIndex >= 0) {
+                          await playerService.playSong(originalIndex);
+                        }
                       },
                       child: Container(
                         margin: const EdgeInsets.symmetric(
@@ -270,5 +445,11 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
