@@ -7,19 +7,23 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: macos-latest
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.41.6'
           channel: 'stable'
+          cache: true
       
       - name: Get dependencies
         run: flutter pub get
@@ -89,12 +93,35 @@ jobs:
             exit 1
           fi
       
+      - name: Verify Build Artifacts
+        if: always()
+        run: |
+          echo "=== Checking for IPA file ==="
+          if [ -f build/ios/spotify_music_player.ipa ]; then
+            echo "✅ IPA file found:"
+            ls -lh build/ios/spotify_music_player.ipa
+          else
+            echo "❌ IPA file NOT found"
+            echo "Contents of build/ios:"
+            ls -la build/ios/ 2>/dev/null || echo "build/ios directory not found"
+          fi
+          
+          echo ""
+          echo "=== Checking for Payload/Runner.app ==="
+          if [ -d build/ios/Payload/Runner.app ]; then
+            echo "✅ Payload/Runner.app found:"
+            ls -lh build/ios/Payload/
+          else
+            echo "❌ Payload/Runner.app NOT found"
+          fi
+      
       - name: Upload IPA to artifacts
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: build/ios/spotify_music_player.ipa
+          if-no-files-found: warn
           retention-days: 30
       
       - name: Upload app to artifacts
@@ -103,22 +130,51 @@ jobs:
         with:
           name: ios-app
           path: build/ios/Payload/Runner.app
+          if-no-files-found: warn
           retention-days: 30
       
       - name: Create Release and Upload IPA
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && success()
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: build/ios/spotify_music_player.ipa
-          tag_name: ios-build-${{ github.run_number }}
+          tag_name: ios-build-${{ github.run_number }}-${{ github.run_attempt }}
+          name: iOS IPA Build #${{ github.run_number }}
           body: |
             iOS IPA Build #${{ github.run_number }}
             
-            **Build Date:** ${{ github.event.head_commit.timestamp }}
+            **Build Attempt:** ${{ github.run_attempt }}
             **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
             
             Download `spotify_music_player.ipa` to install on iOS devices.
+            
+            ### Build Info
+            - Build Runner: macOS Latest
+            - Flutter Version: 3.41.6
+            - Bundle ID: com.example.spotifyMusicPlayer
           draft: false
           prerelease: false
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Fallback - Create Release via GitHub CLI
+        if: failure() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        run: |
+          if [ -f build/ios/spotify_music_player.ipa ]; then
+            TAG_NAME="ios-build-${{ github.run_number }}-${{ github.run_attempt }}"
+            RELEASE_NAME="iOS IPA Build #${{ github.run_number }}"
+            
+            gh release create "$TAG_NAME" \
+              --title "$RELEASE_NAME" \
+              --notes "iOS IPA Build #${{ github.run_number }} - Commit: ${{ github.sha }}" \
+              build/ios/spotify_music_player.ipa
+              
+            echo "✅ Release created via GitHub CLI"
+          else
+            echo "❌ IPA file not found, skipping release creation"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
