@@ -130,10 +130,10 @@ class MusicLibraryService extends ChangeNotifier {
               final song = Song(
                 id: destFile.path.hashCode.toString(),
                 title: fileName.replaceAll('.${extension}', ''),
-                artist: pickedFile.artist ?? 'Unknown',
-                album: pickedFile.customProperties?['album'] as String? ?? 'Unknown Album',
+                artist: 'Unknown Artist',
+                album: 'Unknown Album',
                 filePath: destFile.path,
-                duration: Duration(milliseconds: pickedFile.size),
+                duration: Duration(seconds: 180), // Demo duration
               );
 
               if (!_allSongs.any((s) => s.filePath == destFile.path)) {

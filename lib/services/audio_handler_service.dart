@@ -1,7 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:flutter/foundation.dart';
 import '../models/song_model.dart';
 
 class AdvancedAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
@@ -51,18 +50,18 @@ class AdvancedAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandl
     });
   }
 
-  PlaybackState _mapProcessingState(ProcessingState state) {
+  AudioProcessingState _mapProcessingState(ProcessingState state) {
     switch (state) {
       case ProcessingState.idle:
-        return PlaybackState(state: AudioProcessingState.idle);
+        return AudioProcessingState.idle;
       case ProcessingState.loading:
-        return PlaybackState(state: AudioProcessingState.loading);
+        return AudioProcessingState.loading;
       case ProcessingState.buffering:
-        return PlaybackState(state: AudioProcessingState.buffering);
+        return AudioProcessingState.buffering;
       case ProcessingState.ready:
-        return PlaybackState(state: AudioProcessingState.ready);
+        return AudioProcessingState.ready;
       case ProcessingState.completed:
-        return PlaybackState(state: AudioProcessingState.completed);
+        return AudioProcessingState.completed;
     }
   }
 

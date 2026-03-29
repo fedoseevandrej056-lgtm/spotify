@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/audio_player_service.dart';
+import '../providers.dart';
 import '../utils/formatters.dart';
 import '../utils/theme.dart';
 

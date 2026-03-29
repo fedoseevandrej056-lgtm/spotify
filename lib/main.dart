@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers.dart';
 import 'services/audio_player_service.dart';
 import 'services/music_library_service.dart';
+import 'screens/add_music_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/now_playing_screen.dart';
-import 'screens/add_music_screen.dart';
 import 'utils/theme.dart';
-
-final audioPlayerServiceProvider = ChangeNotifierProvider<AudioPlayerService>((ref) => AudioPlayerService());
-final musicLibraryServiceProvider = ChangeNotifierProvider<MusicLibraryService>((ref) => MusicLibraryService());
 
 void main() {
   runApp(const ProviderScope(child: SpotifyMusicApp()));
@@ -195,142 +193,15 @@ class _MainAppState extends ConsumerState<MainApp> {
     }
   }
 }
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Mini player
-              if (playerService.currentSong != null)
-                Container(
-                  height: 70,
-                  color: SpotifyTheme.playlistBg,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedIndex = 0;
-                      });
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: SpotifyTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Icon(
-                              Icons.music_note,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  playerService.currentSong!.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: SpotifyTheme.textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  playerService.currentSong!.artist,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: SpotifyTheme.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              if (playerService.isPlaying) {
-                                playerService.pause();
-                              } else {
-                                playerService.play();
-                              }
-                            },
-                            child: Icon(
-                              playerService.isPlaying
-                                  ? Icons.pause_circle_filled
-                                  : Icons.play_circle_filled,
-                              size: 44,
-                              color: SpotifyTheme.primaryColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              // Bottom Navigation
-              BottomNavigationBar(
-                currentIndex: _selectedIndex,
-                backgroundColor: SpotifyTheme.darkBg,
-                selectedItemColor: SpotifyTheme.primaryColor,
-                unselectedItemColor: SpotifyTheme.textSecondary,
-                type: BottomNavigationBarType.fixed,
-                onTap: (index) {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
-                },
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.music_note),
-                    label: 'Now Playing',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.library_music),
-                    label: 'Library',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.add_circle),
-                    label: 'Add Music',
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPage(int index) {
-    switch (index) {
-      case 0:
-        return const NowPlayingPage();
-      case 1:
-        return const HomeScreen();
-      case 2:
-        return const AddMusicPage();
-      default:
-        return const HomeScreen();
-    }
-  }
-}
 
 // Now Playing Page
-class NowPlayingPage extends StatelessWidget {
+class NowPlayingPage extends ConsumerWidget {
   const NowPlayingPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AudioPlayerService>(
-      builder: (context, playerService, _) {
-        final song = playerService.currentSong;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playerService = ref.watch(audioPlayerServiceProvider);
+    final song = playerService.currentSong;
 
         if (song == null) {
           return Scaffold(
@@ -419,19 +290,16 @@ class NowPlayingPage extends StatelessWidget {
             ),
           ),
         );
-      },
-    );
-  }
+      }
 }
 
 // Player Controls Widget
-class PlayerControlsWidget extends StatelessWidget {
+class PlayerControlsWidget extends ConsumerWidget {
   const PlayerControlsWidget({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AudioPlayerService>(
-      builder: (context, playerService, _) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playerService = ref.watch(audioPlayerServiceProvider);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -441,12 +309,12 @@ class PlayerControlsWidget extends StatelessWidget {
               child: Column(
                 children: [
                   SliderTheme(
-                    data: SliderThemeData(
+                    data: const SliderThemeData(
                       trackHeight: 4,
-                      thumbShape: const RoundSliderThumbShape(
+                      thumbShape: RoundSliderThumbShape(
                         enabledThumbRadius: 8,
                       ),
-                      overlayShape: const RoundSliderOverlayShape(
+                      overlayShape: RoundSliderOverlayShape(
                         overlayRadius: 10,
                       ),
                     ),
@@ -517,7 +385,7 @@ class PlayerControlsWidget extends StatelessWidget {
                   child: Container(
                     width: 70,
                     height: 70,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: SpotifyTheme.primaryColor,
                       shape: BoxShape.circle,
                     ),
@@ -545,9 +413,7 @@ class PlayerControlsWidget extends StatelessWidget {
             const SizedBox(height: 20),
           ],
         );
-      },
-    );
-  }
+      }
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -557,75 +423,3 @@ class PlayerControlsWidget extends StatelessWidget {
   }
 }
 
-// Add Music Page
-class AddMusicPage extends StatelessWidget {
-  const AddMusicPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Music'),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add_circle,
-                size: 80,
-                color: SpotifyTheme.primaryColor,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Add Music to Your Library',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: SpotifyTheme.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Import your favorite songs and build your collection',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: SpotifyTheme.textSecondary,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 40),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Provider.of<MusicLibraryService>(context, listen: false)
-                      .importSongsFromFiles();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Demo songs added to library'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.music_note),
-                label: const Text('Import Songs'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: SpotifyTheme.primaryColor,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 60),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

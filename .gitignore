@@ -12,11 +12,10 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+# Build scripts (local only, not for repo)
+build_release.bat
+get_deps.bat
+quick_build.bat
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line

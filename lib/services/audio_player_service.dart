@@ -13,7 +13,6 @@ enum AppPlayerState {
 
 class AudioPlayerService extends ChangeNotifier {
   late AudioPlayer _audioPlayer;
-  late ConcatenatingAudioSource _playlist;
 
   List<Song> _songs = [];
   int _currentSongIndex = -1;
@@ -29,7 +28,6 @@ class AudioPlayerService extends ChangeNotifier {
 
   void _initializePlayer() async {
     _audioPlayer = AudioPlayer();
-    _playlist = ConcatenatingAudioSource(children: []);
 
     _audioPlayer.positionStream.listen((position) {
       _currentPosition = position;
