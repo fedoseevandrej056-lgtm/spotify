@@ -31,7 +31,7 @@ class SongTile extends StatelessWidget {
           child: isPlaying
               ? Center(
                   child: Icon(
-                    Icons.pause_circle_filled,
+                    Icons.pause_circle_filled_rounded,
                     color: SpotifyTheme.primaryColor,
                   ),
                 )
@@ -64,7 +64,7 @@ class SongTile extends StatelessWidget {
           ),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert_rounded),
           color: SpotifyTheme.textSecondary,
           onPressed: onMore,
         ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/audio_player_service.dart';
 import '../utils/theme.dart';
 
-class MiniPlayer extends StatelessWidget {
+class MiniPlayer extends ConsumerWidget {
   final VoidCallback onTap;
 
   const MiniPlayer({
@@ -12,9 +12,8 @@ class MiniPlayer extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AudioPlayerService>(
-      builder: (context, playerService, _) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playerService = ref.watch(audioPlayerServiceProvider);
         if (playerService.currentSong == null) {
           return const SizedBox.shrink();
         }
@@ -36,7 +35,7 @@ class MiniPlayer extends StatelessWidget {
                     color: SpotifyTheme.primaryColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Icon(Icons.music_note),
+                  child: const Icon(Icons.music_note_rounded),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -77,8 +76,8 @@ class MiniPlayer extends StatelessWidget {
                   },
                   child: Icon(
                     playerService.isPlaying
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_filled,
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_filled_rounded,
                     size: 40,
                     color: SpotifyTheme.primaryColor,
                   ),
@@ -87,7 +86,5 @@ class MiniPlayer extends StatelessWidget {
             ),
           ),
         );
-      },
-    );
   }
 }

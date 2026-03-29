@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/audio_player_service.dart';
 import '../utils/formatters.dart';
 import '../utils/theme.dart';
 
-class PlayerControls extends StatelessWidget {
+class PlayerControls extends ConsumerWidget {
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
 
@@ -15,9 +16,8 @@ class PlayerControls extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AudioPlayerService>(
-      builder: (context, playerService, _) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playerService = ref.watch(audioPlayerServiceProvider);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -83,19 +83,23 @@ class PlayerControls extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.shuffle),
+                    icon: const Icon(Icons.shuffle_rounded),
                     iconSize: 24,
                     color: SpotifyTheme.textSecondary,
                     onPressed: () {},
                   ),
                   IconButton(
-                    icon: const Icon(Icons.skip_previous),
+                    icon: const Icon(Icons.skip_previous_rounded),
                     iconSize: 32,
                     color: SpotifyTheme.textPrimary,
-                    onPressed: onPrevious ?? () => playerService.previous(),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      (onPrevious ?? () => playerService.previous())();
+                    },
                   ),
                   GestureDetector(
                     onTap: () {
+                      HapticFeedback.mediumImpact();
                       if (playerService.isPlaying) {
                         playerService.pause();
                       } else {
@@ -108,24 +112,34 @@ class PlayerControls extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: SpotifyTheme.primaryColor,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: SpotifyTheme.primaryColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         playerService.isPlaying
-                            ? Icons.pause
-                            : Icons.play_arrow,
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
                         size: 32,
                         color: Colors.black,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.skip_next),
+                    icon: const Icon(Icons.skip_next_rounded),
                     iconSize: 32,
                     color: SpotifyTheme.textPrimary,
-                    onPressed: onNext ?? () => playerService.next(),
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      (onNext ?? () => playerService.next())();
+                    },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.repeat),
+                    icon: const Icon(Icons.repeat_rounded),
                     iconSize: 24,
                     color: SpotifyTheme.textSecondary,
                     onPressed: () {},
@@ -135,7 +149,5 @@ class PlayerControls extends StatelessWidget {
             ),
           ],
         );
-      },
-    );
   }
 }

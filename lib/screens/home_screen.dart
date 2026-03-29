@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/audio_player_service.dart';
 import '../services/music_library_service.dart';
 import '../utils/theme.dart';
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.playlist_play),
+            icon: const Icon(Icons.playlist_play_rounded),
             onPressed: () {
               final libraryService =
                   Provider.of<MusicLibraryService>(context, listen: false);

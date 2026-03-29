@@ -55,3 +55,21 @@ jobs:
           name: ios-app
           path: build/ios/iphoneos/Runner.app
           retention-days: 30
+      
+      - name: Create Release and Upload IPA
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/ios/iphoneos/spotify_music_player.ipa
+          tag_name: ios-build-${{ github.run_number }}
+          body: |
+            iOS IPA Build #${{ github.run_number }}
+            
+            **Build Date:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+            
+            Download `spotify_music_player.ipa` to install on iOS devices.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
