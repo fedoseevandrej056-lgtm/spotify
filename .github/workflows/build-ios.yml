@@ -32,35 +32,84 @@ jobs:
           pod install --repo-update
           cd ..
       
+      - name: Disable Code Signing
+        run: |
+          cd ios
+          find . -name "*.pbxproj" -exec sed -i '' 's/CODE_SIGN_IDENTITY = "";/CODE_SIGN_IDENTITY = ""; CODE_SIGNING_REQUIRED = NO; CODE_SIGNING_ALLOWED = NO;/g' {} \;
+          find . -name "*.pbxproj" -exec sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual; CODE_SIGNING_REQUIRED = NO; CODE_SIGNING_ALLOWED = NO;/g' {} \;
+          cd ..
+      
       - name: Build iOS
-        run: flutter build ios --release --no-codesign
+        run: |
+          flutter build ios --release --no-codesign \
+            -v 2>&1 | tee build.log
+      
+      - name: Check Build Output
+        if: always()
+        run: |
+          if [ -f build.log ]; then
+            tail -100 build.log
+          fi
+          if [ -d build/ios/iphoneos/Runner.app ]; then
+            echo "✅ Runner.app built successfully"
+            ls -la build/ios/iphoneos/
+          else
+            echo "❌ Runner.app not found"
+            find build/ios -type d -name "*.app" 2>/dev/null || echo "No .app found"
+          fi
       
       - name: Create IPA
         run: |
-          cd build/ios/iphoneos
-          mkdir -p Payload
-          mv Runner.app Payload/
+          # Find Runner.app directory
+          APP_PATH=$(find build/ios -name "Runner.app" -type d | head -1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ Error: Runner.app not found!"
+            find build/ios -type d | head -20
+            exit 1
+          fi
+          
+          echo "✅ Found Runner.app at: $APP_PATH"
+          
+          # Create Payload directory
+          mkdir -p build/ios/Payload
+          
+          # Copy app to Payload
+          cp -r "$APP_PATH" build/ios/Payload/
+          
+          # Create IPA
+          cd build/ios
           zip -r -q spotify_music_player.ipa Payload/
+          
+          # Verify IPA
+          if [ -f spotify_music_player.ipa ]; then
+            echo "✅ IPA created successfully: $(ls -lh spotify_music_player.ipa | awk '{print $5}')"
+          else
+            echo "❌ Failed to create IPA"
+            exit 1
+          fi
       
       - name: Upload IPA to artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
-          path: build/ios/iphoneos/spotify_music_player.ipa
+          path: build/ios/spotify_music_player.ipa
           retention-days: 30
       
       - name: Upload app to artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: build/ios/iphoneos/Runner.app
+          path: build/ios/Payload/Runner.app
           retention-days: 30
       
       - name: Create Release and Upload IPA
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && success()
         uses: softprops/action-gh-release@v1
         with:
-          files: build/ios/iphoneos/spotify_music_player.ipa
+          files: build/ios/spotify_music_player.ipa
           tag_name: ios-build-${{ github.run_number }}
           body: |
             iOS IPA Build #${{ github.run_number }}
